@@ -1,7 +1,7 @@
-# DBProject_Group777_CampusEventSystem
+# DBProject_Group9_CampusEventSystem
 Proyek ini adalah implementasi database-driven application untuk mata kuliah Database Design and Implementation. Sistem "Eventify" bertujuan untuk menjadi platform terpusat bagi mahasiswa dan UKM dalam mengelola dan menemukan acara di lingkungan kampus.
 
-## Anggota Kelompok (Grup 777)
+## Anggota Kelompok (Grup 9)
 * Rafael Mahardika Arya Dewamurti (24/536279/PA/22755)
 * Bobby Rahman Hartanto (24/539383/PA/22903)
 
