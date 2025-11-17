@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventify Dashboard | CRUD Week 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            ::-webkit-scrollbar { width: 8px; }
+            ::-webkit-scrollbar-track { background: #111827; }
+            ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+            ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        ::placeholder { color: #6b7280; }
+
+        /* BARU: Style untuk wadah peta */
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 0.5rem; /* 8px */
+            border: 1px solid #374151; /* border-gray-700 */
+            z-index: 10; /* Memastikan peta di atas elemen lain jika perlu */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-blue-900 text-gray-200 min-h-screen p-4 md:p-8">
+
+    <div class="container mx-auto max-w-6xl">
+        
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">Eventify Dashboard</h1>
+            <p class="text-lg text-blue-300">Demo CRUD (Create, Read, Update, Delete) - Week 3</p>
+        </div>
+
+        <div id="status-message" class="mb-6 p-4 rounded-lg hidden transition-all duration-300 text-center font-medium"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <div class="glass-card p-6 rounded-xl shadow-2xl">
+                <h2 id="form-title" class="text-2xl font-semibold mb-5 text-white">Buat Event Baru</h2>
+                <form id="create-form" class="space-y-4">
+                    
+                    <div>
+                        <label for="nama_acara" class="block text-sm font-medium text-blue-200">Nama Acara</label>
+                        <input type="text" id="nama_acara" name="nama_acara" required
+                               class="mt-1 block w-full rounded-lg border-gray-700 bg-gray-800/50 p-3 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors">
+                    </div>
+                    
+                    <div>
+                        <label for="lokasi" class="block text-sm font-medium text-blue-200">Lokasi (Geser Pin)</label>
+                        <div id="map" class="mt-1"></div>
+                        <input type="hidden" id="lokasi" name="lokasi" required>
+                    </div>
+
+                    <div>
+                        <label for="tanggal_waktu_mulai" class="block text-sm font-medium text-blue-200">Tanggal Mulai</label>
+                        <input type="datetime-local" id="tanggal_waktu_mulai" name="tanggal_waktu_mulai" required
+                               class="mt-1 block w-full rounded-lg border-gray-700 bg-gray-800/50 p-3 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                               style="color-scheme: dark;">
+                    </div>
+                    
+                    <div>
+                        <label for="kuota" class="block text-sm font-medium text-blue-200">Kuota Peserta</label>
+                        <input type="number" id="kuota" name="kuota" min="0" placeholder="0"
+                               class="mt-1 block w-full rounded-lg border-gray-700 bg-gray-800/50 p-3 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors">
+                    </div>
+
+                    <div>
+                        <label for="deskripsi" class="block text-sm font-medium text-blue-200">Deskripsi</label>
+                        <textarea id="deskripsi" name="deskripsi" rows="4"
+                                  class="mt-1 block w-full rounded-lg border-gray-700 bg-gray-800/50 p-3 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                  placeholder="Jelaskan detail acaramu di sini..."></textarea>
+                    </div>
+
+                    <input type="hidden" id="event_id" name="event_id">
+
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
+                        <button type="submit"
+                                id="btn-submit"
+                                class="w-full justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-105 shadow-blue-500/50">
+                            Submit Event
+                        </button>
+                        <button type="button" id="btn-cancel-edit"
+                                class="w-full justify-center py-3 px-4 border border-gray-500 rounded-lg shadow-sm text-sm font-medium text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all hidden">
+                            Batal Edit
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="space-y-6">
+                <h2 class="text-2xl font-semibold text-white">Daftar Event (Read)</h2>
+                <div id="event-list" class="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+                    <div class="glass-card p-6 rounded-xl text-center">
+                        <h3 class="font-medium text-white">Memuat Data Event...</h3>
+                        <p class="text-sm text-gray-400">Pastikan server backend.js sudah berjalan...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api/events';
+        const eventList = document.getElementById('event-list');
+        const createForm = document.getElementById('create-form');
+        const statusMessage = document.getElementById('status-message');
+        const eventIdField = document.getElementById('event_id');
+        const btnCancelEdit = document.getElementById('btn-cancel-edit');
+        const formTitle = document.getElementById('form-title');
+        const btnSubmit = document.getElementById('btn-submit');
+        const lokasiInput = document.getElementById('lokasi'); // Input hidden lokasi
+
+        // --- REVISI: Inisialisasi Peta Leaflet ---
+        const defaultCoords = [-7.7699, 110.3680]; // Titik tengah (misal: UGM)
+        const map = L.map('map').setView(defaultCoords, 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Tambahkan pin/marker yang bisa digeser
+        const marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
+
+        // Fungsi untuk mengupdate input hidden saat pin digeser
+        function updateLokasiInput(latlng) {
+            lokasiInput.value = `${latlng.lat}, ${latlng.lng}`;
+        }
+        
+        // Set nilai awal untuk input hidden
+        updateLokasiInput(marker.getLatLng());
+
+        // Tambahkan event listener saat marker selesai digeser
+        marker.on('dragend', function(e) {
+            updateLokasiInput(e.target.getLatLng());
+        });
+        // --- Akhir Revisi Peta ---
+
+
+        function showStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.className = `mb-6 p-4 rounded-lg transition-all duration-300 text-center font-medium ${isError ? 'bg-red-500/80 text-white' : 'bg-green-500/80 text-white'}`;
+            statusMessage.classList.remove('hidden');
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+                statusMessage.textContent = '';
+            }, 4000);
+        }
+
+        // --- FUNGSI READ (R) ---
+        async function loadEvents() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Gagal mengambil data dari server. Status: ${response.status}`);
+                }
+                
+                const events = await response.json();
+                eventList.innerHTML = ''; 
+
+                if (events.length === 0) {
+                    eventList.innerHTML = `
+                        <div class="glass-card p-6 rounded-xl text-center">
+                            <h3 class="font-medium text-white">Belum Ada Event</h3>
+                            <p class="text-sm text-gray-400">Buat event baru di formulir sebelah kiri.</p>
+                        </div>`;
+                    return;
+                }
+
+                events.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'glass-card p-5 rounded-xl shadow-lg transition-all hover:border-white/30';
+                    
+                    // REVISI: Tampilkan lokasi sebagai koordinat jika itu string koordinat
+                    let lokasiTampil = event.lokasi;
+                    if (event.lokasi && event.lokasi.includes(',')) {
+                        lokasiTampil = `Koordinat: ${event.lokasi.split(',')[0].trim().slice(0,7)}, ${event.lokasi.split(',')[1].trim().slice(0,7)}`;
+                    }
+
+                    eventElement.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-semibold text-lg text-white">${event.nama_acara}</h3>
+                                <p class="text-sm text-blue-300">${lokasiTampil}</p>
+                                <p class="text-sm text-gray-400 mt-1">${new Date(event.tanggal_waktu_mulai).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                                <p class="text-sm text-gray-300 mt-3">${event.deskripsi || 'Tidak ada deskripsi.'}</p>
+                            </div>
+                            <div class="flex flex-col space-y-2 ml-4">
+                                <button onclick="handleEdit(${event.event_id})" title="Edit"
+                                        class="p-2 rounded-md bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/40 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                                <button onclick="handleDelete(${event.event_id})" title="Hapus"
+                                        class="p-2 rounded-md bg-red-500/20 text-red-300 hover:bg-red-500/40 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    eventList.appendChild(eventElement);
+                });
+
+            } catch (error) {
+                console.error('Error loadEvents:', error);
+                
+                let errorMessage = 'Gagal terhubung ke server.';
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Koneksi Gagal. Pastikan server `backend.js` sudah Anda jalankan di terminal (ketik: node backend.js) dan tidak ada error di sana.';
+                } else {
+                    errorMessage = error.message; 
+                }
+
+                eventList.innerHTML = `
+                    <div class="glass-card p-6 rounded-xl text-center bg-red-500/30 border border-red-400">
+                        <h3 class="font-medium text-white text-lg">Error Memuat Data</h3>
+                        <p class="text-sm text-red-200 mt-2">${errorMessage}</p>
+                    </div>`;
+            }
+        }
+
+        // --- FUNGSI CREATE (C) & UPDATE (U) ---
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+
+            const formData = new FormData(createForm);
+            const data = Object.fromEntries(formData.entries());
+            const eventId = eventIdField.value;
+
+            let method = 'POST';
+            let url = API_URL;
+            
+            if (eventId) {
+                method = 'PUT';
+                url = `${API_URL}/${eventId}`;
+            }
+
+            data.organizer_id = data.organizer_id || null;
+            data.category_id = data.category_id || null;
+            data.kuota = data.kuota || 0;
+
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Gagal menyimpan data.');
+                }
+
+                showStatus(result.message);
+                resetForm();
+                loadEvents();
+
+            } catch (error) {
+                console.error('Error submitForm:', error);
+                showStatus(error.message, true);
+            }
+        });
+
+        // --- FUNGSI DELETE (D) ---
+        async function handleDelete(id) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus event ID ${id}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Gagal menghapus data.');
+                }
+                
+                showStatus(result.message);
+                loadEvents(); 
+
+            } catch (error) {
+                console.error('Error handleDelete:', error);
+                showStatus(error.message, true);
+            }
+        }
+
+        // --- Fungsi Helper untuk Mode Edit ---
+        async function handleEdit(id) {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Gagal mengambil data event untuk diedit.');
+                
+                const events = await response.json();
+                const eventToEdit = events.find(e => e.event_id === id);
+
+                if (!eventToEdit) {
+                    showStatus('Event tidak ditemukan.', true);
+                    return;
+                }
+
+                // Isi form dengan data yang ada
+                document.getElementById('nama_acara').value = eventToEdit.nama_acara;
+                document.getElementById('kuota').value = eventToEdit.kuota;
+                document.getElementById('deskripsi').value = eventToEdit.deskripsi || '';
+                
+                const localISOTime = new Date(new Date(eventToEdit.tanggal_waktu_mulai).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                document.getElementById('tanggal_waktu_mulai').value = localISOTime;
+                
+                eventIdField.value = eventToEdit.event_id;
+
+                // --- REVISI: Pindahkan Peta ke Lokasi Tersimpan ---
+                const coordsStr = eventToEdit.lokasi || defaultCoords.join(', ');
+                const [lat, lng] = coordsStr.split(',').map(Number);
+                
+                marker.setLatLng([lat, lng]); // Pindahkan pin
+                map.setView([lat, lng], 16); // Pusatkan peta
+                lokasiInput.value = coordsStr; // Update input hidden
+                // --- Akhir Revisi Peta ---
+
+                // Ubah tampilan form ke mode "Edit"
+                formTitle.textContent = `Mengedit: ${eventToEdit.nama_acara}`;
+                btnSubmit.textContent = 'Simpan Perubahan';
+                btnCancelEdit.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } catch (error) {
+                console.error('Error handleEdit:', error);
+                showStatus(error.message, true);
+            }
+        }
+        
+        function resetForm() {
+            createForm.reset();
+            eventIdField.value = '';
+            formTitle.textContent = 'Buat Event Baru';
+            btnSubmit.textContent = 'Submit Event';
+            btnCancelEdit.classList.add('hidden');
+
+            // --- REVISI: Reset Peta ke Lokasi Default ---
+            marker.setLatLng(defaultCoords);
+            map.setView(defaultCoords, 15);
+            updateLokasiInput(defaultCoords);
+            // --- Akhir Revisi Peta ---
+        }
+
+        btnCancelEdit.addEventListener('click', resetForm);
+
+        document.addEventListener('DOMContentLoaded', loadEvents);
+    </script>
+
+</body>
+</html>

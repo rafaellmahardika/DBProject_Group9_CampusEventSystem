@@ -1,0 +1,17 @@
+{
+  "name": "eventify-backend-w3",
+  "version": "1.0.0",
+  "description": "Backend server untuk demo CRUD Week 3 Proyek Database.",
+  "main": "backend.js",
+  "scripts": {
+    "start": "node backend.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kelompok 9 (Rafael & Bobby)",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.10.1"
+  }
+}
