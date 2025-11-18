@@ -16,12 +16,11 @@ app.use(express.json()); // Untuk mem-parsing JSON body dari request
 
 // --- KONEKSI DATABASE ---
 // (Menggunakan Connection Pool untuk performa)
-// Ganti detail ini sesuai dengan setup database MySQL Anda.
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: '', // <-- GANTI INI (biasanya '' jika XAMPP standar)
-    database: 'eventify_db',   // Pastikan nama DB-nya sama
+    password: '', 
+    database: 'eventify_db',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -160,4 +159,5 @@ app.delete('/api/events/:id', async (req, res) => {
 // Menjalankan server
 app.listen(port, () => {
     console.log(`Server backend "Eventify" berjalan di http://localhost:${port}`);
+
 });
