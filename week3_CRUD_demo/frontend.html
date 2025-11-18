@@ -31,13 +31,12 @@
         }
         ::placeholder { color: #6b7280; }
 
-        /* BARU: Style untuk wadah peta */
         #map {
             height: 300px;
             width: 100%;
-            border-radius: 0.5rem; /* 8px */
-            border: 1px solid #374151; /* border-gray-700 */
-            z-index: 10; /* Memastikan peta di atas elemen lain jika perlu */
+            border-radius: 0.5rem; 
+            border: 1px solid #374151;
+            z-index: 10; 
         }
     </style>
 </head>
@@ -128,31 +127,25 @@
         const btnCancelEdit = document.getElementById('btn-cancel-edit');
         const formTitle = document.getElementById('form-title');
         const btnSubmit = document.getElementById('btn-submit');
-        const lokasiInput = document.getElementById('lokasi'); // Input hidden lokasi
+        const lokasiInput = document.getElementById('lokasi');
 
-        // --- REVISI: Inisialisasi Peta Leaflet ---
-        const defaultCoords = [-7.7699, 110.3680]; // Titik tengah (misal: UGM)
+        const defaultCoords = [-7.7699, 110.3680];
         const map = L.map('map').setView(defaultCoords, 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Tambahkan pin/marker yang bisa digeser
         const marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
 
-        // Fungsi untuk mengupdate input hidden saat pin digeser
         function updateLokasiInput(latlng) {
             lokasiInput.value = `${latlng.lat}, ${latlng.lng}`;
         }
-        
-        // Set nilai awal untuk input hidden
+
         updateLokasiInput(marker.getLatLng());
 
-        // Tambahkan event listener saat marker selesai digeser
         marker.on('dragend', function(e) {
             updateLokasiInput(e.target.getLatLng());
         });
-        // --- Akhir Revisi Peta ---
 
 
         function showStatus(message, isError = false) {
@@ -165,7 +158,7 @@
             }, 4000);
         }
 
-        // --- FUNGSI READ (R) ---
+        // --- FUNGSI READ ---
         async function loadEvents() {
             try {
                 const response = await fetch(API_URL);
@@ -189,8 +182,7 @@
                 events.forEach(event => {
                     const eventElement = document.createElement('div');
                     eventElement.className = 'glass-card p-5 rounded-xl shadow-lg transition-all hover:border-white/30';
-                    
-                    // REVISI: Tampilkan lokasi sebagai koordinat jika itu string koordinat
+      
                     let lokasiTampil = event.lokasi;
                     if (event.lokasi && event.lokasi.includes(',')) {
                         lokasiTampil = `Koordinat: ${event.lokasi.split(',')[0].trim().slice(0,7)}, ${event.lokasi.split(',')[1].trim().slice(0,7)}`;
@@ -241,7 +233,7 @@
             }
         }
 
-        // --- FUNGSI CREATE (C) & UPDATE (U) ---
+        // --- FUNGSI CREATE & UPDATE ---
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault(); 
 
@@ -285,7 +277,7 @@
             }
         });
 
-        // --- FUNGSI DELETE (D) ---
+        // --- FUNGSI DELETE ---
         async function handleDelete(id) {
             if (!confirm(`Apakah Anda yakin ingin menghapus event ID ${id}?`)) {
                 return;
@@ -335,14 +327,12 @@
                 
                 eventIdField.value = eventToEdit.event_id;
 
-                // --- REVISI: Pindahkan Peta ke Lokasi Tersimpan ---
                 const coordsStr = eventToEdit.lokasi || defaultCoords.join(', ');
                 const [lat, lng] = coordsStr.split(',').map(Number);
                 
-                marker.setLatLng([lat, lng]); // Pindahkan pin
+                marker.setLatLng([lat, lng]); // Pindah pin
                 map.setView([lat, lng], 16); // Pusatkan peta
                 lokasiInput.value = coordsStr; // Update input hidden
-                // --- Akhir Revisi Peta ---
 
                 // Ubah tampilan form ke mode "Edit"
                 formTitle.textContent = `Mengedit: ${eventToEdit.nama_acara}`;
@@ -363,11 +353,10 @@
             btnSubmit.textContent = 'Submit Event';
             btnCancelEdit.classList.add('hidden');
 
-            // --- REVISI: Reset Peta ke Lokasi Default ---
+            // --- Reset Peta ke Lokasi Default ---
             marker.setLatLng(defaultCoords);
             map.setView(defaultCoords, 15);
             updateLokasiInput(defaultCoords);
-            // --- Akhir Revisi Peta ---
         }
 
         btnCancelEdit.addEventListener('click', resetForm);
@@ -376,4 +365,5 @@
     </script>
 
 </body>
+
 </html>
