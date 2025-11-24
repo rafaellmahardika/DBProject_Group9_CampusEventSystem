@@ -12,11 +12,10 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
-// --- KONEKSI DATABASE ---
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: '', // Sesuaikan dengan password XAMPP Anda
+    password: '',
     database: 'eventify_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -25,7 +24,6 @@ const pool = mysql.createPool({
 
 // =================================================================
 // 1. AUTHENTICATION (LOGIN & REGISTER) - TABEL USERS
-// =================================================================
 
 // REGISTER USER
 app.post('/api/auth/register', async (req, res) => {
@@ -65,7 +63,6 @@ app.post('/api/auth/login', async (req, res) => {
 
 // =================================================================
 // 2. DATA MASTER (DROPDOWN) - ORGANIZERS & CATEGORIES
-// =================================================================
 
 // GET Categories
 app.get('/api/categories', async (req, res) => {
@@ -81,7 +78,6 @@ app.get('/api/organizers', async (req, res) => {
 
 // =================================================================
 // 3. ADMIN API (FITUR BARU: Tambah Data Master)
-// =================================================================
 
 // Tambah Kategori Baru
 app.post('/api/categories', async (req, res) => {
@@ -102,7 +98,6 @@ app.post('/api/organizers', async (req, res) => {
         const { nama_organizer, email_kontak } = req.body;
         if (!nama_organizer || !email_kontak) return res.status(400).json({ message: 'Nama dan Email wajib diisi' });
 
-        // Default is_verified = 1 (karena yang input Admin lewat dashboard khusus)
         await pool.query('INSERT INTO Organizers (nama_organizer, email_kontak, is_verified) VALUES (?, ?, 1)', 
             [nama_organizer, email_kontak]);
             
@@ -114,9 +109,8 @@ app.post('/api/organizers', async (req, res) => {
 
 // =================================================================
 // 4. EVENTS (CORE CRUD + SEARCH)
-// =================================================================
 
-// GET EVENTS (Support Search)
+// GET EVENTS (Search)
 app.get('/api/events', async (req, res) => {
     try {
         const { search } = req.query; 
@@ -167,7 +161,6 @@ app.delete('/api/events/:id', async (req, res) => {
 
 // =================================================================
 // 5. REGISTRATIONS (TRANSAKSI)
-// =================================================================
 
 // User mendaftar ke Event
 app.post('/api/registrations', async (req, res) => {
@@ -184,6 +177,46 @@ app.post('/api/registrations', async (req, res) => {
         res.status(201).json({ message: 'Berhasil mendaftar event!' });
     } catch (error) {
         res.status(500).json({ message: 'Gagal mendaftar.' });
+    }
+});
+
+// =================================================================
+// 6. FEEDBACK (RATING & ULASAN)
+
+// Beri Feedback ke Event
+app.post('/api/feedback', async (req, res) => {
+    try {
+        const { event_id, user_id, rating, komentar } = req.body;
+        
+        // Validasi Rating
+        if (rating < 1 || rating > 5) return res.status(400).json({ message: 'Rating harus 1-5.' });
+
+        // Cek apakah user sudah pernah review event ini
+        const [existing] = await pool.query('SELECT * FROM Feedback WHERE event_id = ? AND user_id = ?', [event_id, user_id]);
+        if (existing.length > 0) return res.status(400).json({ message: 'Anda sudah mengulas event ini.' });
+
+        const query = `INSERT INTO Feedback (event_id, user_id, rating, komentar) VALUES (?, ?, ?, ?)`;
+        await pool.query(query, [event_id, user_id, rating, komentar]);
+
+        res.status(201).json({ message: 'Terima kasih atas ulasan Anda!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Gagal mengirim ulasan.' });
+    }
+});
+
+app.get('/api/feedback/:eventId', async (req, res) => {
+    try {
+        const query = `
+            SELECT f.*, u.nama_lengkap 
+            FROM Feedback f
+            JOIN Users u ON f.user_id = u.user_id
+            WHERE f.event_id = ?
+            ORDER BY f.feedback_id DESC
+        `;
+        const [reviews] = await pool.query(query, [req.params.eventId]);
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: 'Gagal memuat ulasan.' });
     }
 });
 
