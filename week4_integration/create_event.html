@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Buat Event - Eventify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        #map { height: 250px; width: 100%; border-radius: 0.5rem; z-index: 0; }
+        /* Fix z-index leaflet agar tidak menutupi modal */
+        .leaflet-pane { z-index: 0 !important; } 
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6 font-sans">
+
+    <div class="max-w-3xl mx-auto">
+        <a href="index.html" class="text-gray-400 hover:text-white mb-6 inline-flex items-center transition">
+            <span class="mr-2">←</span> Kembali ke Dashboard
+        </a>
+        
+        <div class="glass p-8 rounded-2xl shadow-2xl">
+            <h1 class="text-3xl font-bold mb-1">Buat Event Baru</h1>
+            <p class="text-gray-400 mb-8 text-sm">Isi detail acara kampusmu di bawah ini.</p>
+            
+            <form id="createForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Nama Event</label>
+                    <input type="text" name="nama_acara" required class="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none transition text-white">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Kategori</label>
+                        <div class="relative">
+                            <select id="categorySelect" name="category_id" class="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-3 appearance-none focus:border-blue-500 outline-none cursor-pointer text-gray-300">
+                                <option value="">Pilih Kategori...</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">▼</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Penyelenggara</label>
+                        <div class="relative">
+                            <select id="organizerSelect" name="organizer_id" class="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-3 appearance-none focus:border-blue-500 outline-none cursor-pointer text-gray-300">
+                                <option value="">Pilih Organizer...</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">▼</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Lokasi (Geser Pin)</label>
+                    <div id="map" class="border border-gray-700"></div>
+                    <input type="hidden" id="lokasiInput" name="lokasi">
+                    <p class="text-xs text-gray-500 mt-1">*Geser pin merah ke lokasi acara.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Waktu Mulai</label>
+                        <input type="datetime-local" name="tanggal_waktu_mulai" required class="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-3 outline-none text-white" style="color-scheme: dark;">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Kuota</label>
+                        <input type="number" name="kuota" placeholder="0" class="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-3 outline-none text-white">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Deskripsi</label>
+                    <textarea name="deskripsi" rows="4" placeholder="Jelaskan detail acaranya..." class="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-3 outline-none text-white"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold text-white shadow-lg shadow-blue-600/30 transition transform hover:scale-[1.01] mt-4">Terbitkan Event</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="successModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-gray-800 border border-gray-700 p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <div class="text-5xl mb-4"></div>
+            <h3 class="text-2xl font-bold mb-2 text-white">Event Dibuat!</h3>
+            <p class="text-gray-400 mb-8">Acara kamu berhasil diterbitkan ke publik.</p>
+            <button onclick="window.location.href='index.html'" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition text-white">Kembali ke Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LEAFLET MAP SETUP ---
+        const defaultCoords = [-7.7699, 110.3680]; // UGM
+        const map = L.map('map').setView(defaultCoords, 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        const marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
+        const lokasiInput = document.getElementById('lokasiInput');
+        
+        // Set default value
+        lokasiInput.value = `${defaultCoords[0]}, ${defaultCoords[1]}`;
+
+        marker.on('dragend', function(e) {
+            const { lat, lng } = e.target.getLatLng();
+            lokasiInput.value = `${lat}, ${lng}`;
+        });
+
+        // --- LOAD DROPDOWNS ---
+        async function loadDropdowns() {
+            try {
+                // Kategori
+                const resCat = await fetch('http://localhost:3001/api/categories');
+                (await resCat.json()).forEach(c => {
+                    document.getElementById('categorySelect').innerHTML += `<option value="${c.category_id}">${c.nama_kategori}</option>`;
+                });
+
+                // Organizers
+                const resOrg = await fetch('http://localhost:3001/api/organizers');
+                (await resOrg.json()).forEach(o => {
+                    document.getElementById('organizerSelect').innerHTML += `<option value="${o.organizer_id}">${o.nama_organizer}</option>`;
+                });
+            } catch (e) { console.error("Gagal load dropdown"); }
+        }
+        loadDropdowns();
+
+        // --- SUBMIT FORM ---
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const res = await fetch('http://localhost:3001/api/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    document.getElementById('successModal').classList.remove('hidden');
+                } else {
+                    alert('Gagal membuat event');
+                }
+            } catch (err) { alert('Error server'); }
+        });
+    </script>
+</body>
+</html>
