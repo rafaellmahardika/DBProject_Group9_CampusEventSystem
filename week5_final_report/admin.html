@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Eventify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>.glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }</style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8 font-sans">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Admin Dashboard</h1>
+            <a href="index.html" class="text-gray-400 hover:text-white transition">Ke Halaman Utama →</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="glass p-6 rounded-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center">Tambah Kategori</h2>
+                <form id="catForm" class="space-y-4">
+                    <input type="text" id="nama_kategori" placeholder="Nama Kategori (misal: Workshop)" required 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg font-bold transition">Simpan Kategori</button>
+                </form>
+            </div>
+
+            <div class="glass p-6 rounded-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center">Tambah Organizer</h2>
+                <form id="orgForm" class="space-y-4">
+                    <input type="text" id="nama_organizer" placeholder="Nama Organisasi (misal: KOMA)" required 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-green-500 outline-none">
+                    <input type="email" id="email_kontak" placeholder="Email Kontak" required 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-green-500 outline-none">
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-500 py-2 rounded-lg font-bold transition">Simpan Organizer</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            <h2 class="text-xl font-bold mb-4">Data Saat Ini (Live Preview)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass p-4 rounded-xl">
+                    <h3 class="text-gray-400 text-sm mb-2 uppercase tracking-wider">Daftar Kategori</h3>
+                    <ul id="catList" class="space-y-2 text-sm"></ul>
+                </div>
+                <div class="glass p-4 rounded-xl">
+                    <h3 class="text-gray-400 text-sm mb-2 uppercase tracking-wider">Daftar Organizer</h3>
+                    <ul id="orgList" class="space-y-2 text-sm"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load Data Awal
+        async function loadData() {
+            const [resCat, resOrg] = await Promise.all([
+                fetch('http://localhost:3001/api/categories'),
+                fetch('http://localhost:3001/api/organizers')
+            ]);
+            
+            const cats = await resCat.json();
+            const orgs = await resOrg.json();
+
+            document.getElementById('catList').innerHTML = cats.map(c => `<li class="bg-gray-800 p-2 rounded border border-gray-700">${c.nama_kategori}</li>`).join('');
+            document.getElementById('orgList').innerHTML = orgs.map(o => `<li class="bg-gray-800 p-2 rounded border border-gray-700 flex justify-between"><span>${o.nama_organizer}</span><span class="text-gray-500 text-xs">${o.email_kontak}</span></li>`).join('');
+        }
+        loadData();
+
+        // Handle Submit Kategori
+        document.getElementById('catForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nama_kategori = document.getElementById('nama_kategori').value;
+            const res = await fetch('http://localhost:3001/api/categories', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nama_kategori })
+            });
+            if (res.ok) { alert('Sukses!'); loadData(); e.target.reset(); } 
+            else { alert('Gagal/Duplikat'); }
+        });
+
+        // Handle Submit Organizer
+        document.getElementById('orgForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                nama_organizer: document.getElementById('nama_organizer').value,
+                email_kontak: document.getElementById('email_kontak').value
+            };
+            const res = await fetch('http://localhost:3001/api/organizers', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) { alert('Sukses!'); loadData(); e.target.reset(); }
+            else { alert('Gagal'); }
+        });
+    </script>
+</body>
+</html>

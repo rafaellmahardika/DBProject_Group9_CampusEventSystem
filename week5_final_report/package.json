@@ -1,0 +1,14 @@
+{
+  "name": "eventify-week4",
+  "version": "1.0.0",
+  "description": "Full Stack Integration Eventify",
+  "main": "backend.js",
+  "scripts": {
+    "start": "node backend.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.10.1"
+  }
+}
