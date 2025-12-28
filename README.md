@@ -6,8 +6,8 @@ Proyek ini adalah implementasi database-driven application untuk mata kuliah Dat
 * Bobby Rahman Hartanto (24/539383/PA/22903)
 
 ## Struktur Repositori
-* `/week1_proposal_ERD`: Berisi proposal proyek dan ERD konseptual.
-* `/week2_schema_SQL`: (Akan datang) Berisi skrip SQL dan skema logis.
-* ... (dan seterusnya)
-
-## Setup Instructions (Akan Datang)
+* `/week1_proposal_ERD`: Berisi proposal proyek, analisis kebutuhan sistem, dan perancangan ERD (*Entity Relationship Diagram*) konseptual.
+* `/week2_schema_SQL`: Berisi hasil perancangan skema logis, normalisasi database, dan file SQL dasar untuk pembuatan struktur tabel.
+* `/week3_CRUD_demo`: Berisi demo implementasi CRUD sederhana yang memuat `backend.js` dan antarmuka HTML dasar untuk fungsi pembuatan event (*Create Event*).
+* `/week4_integration`: Berisi inisialisasi server Backend (Node.js), desain antarmuka Frontend awal, dan uji coba koneksi database sederhana.
+* `/Week5_final_report`: **(Final Submission)** Berisi *source code* lengkap aplikasi Full Stack (HTML, CSS, JS, Backend API), file database final (`eventify_db.sql`) yang siap pakai, serta Laporan Akhir Implementasi.
